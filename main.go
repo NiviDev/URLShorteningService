@@ -108,6 +108,39 @@ func setupRouter(db *gorm.DB) *gin.Engine {
 
 	})
 
+	r.PUT("/shorten/:shortCode", func(ctx *gin.Context) {
+		shortCode := ctx.Param("shortCode")
+
+		var updatedURL Shorten
+		var actualURL Shorten
+
+		if err := ctx.ShouldBind(&updatedURL); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+			return
+		}
+
+		if err := db.Where("short_code = ?", shortCode).First(&actualURL).Error; err != nil {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Error, not found"})
+			return
+		}
+
+		if err := db.Model(&actualURL).
+			Select("URL", "AccessCount").
+			Updates(Shorten{URL: updatedURL.URL, AccessCount: 0}).Error; err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"id":        actualURL.ID,
+			"url":       actualURL.URL,
+			"shortCode": actualURL.ShortCode,
+			"createdAt": actualURL.CreatedAt.Format(time.RFC3339),
+			"updatedAt": actualURL.UpdatedAt.Format(time.RFC3339),
+		})
+
+	})
+
 	return r
 }
 
