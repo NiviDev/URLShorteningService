@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -69,6 +70,29 @@ func setupRouter(db *gorm.DB) *gin.Engine {
 		}
 
 		ctx.JSON(201, gin.H{
+			"id":        url.ID,
+			"url":       url.URL,
+			"shortCode": url.ShortCode,
+			"createdAt": url.CreatedAt.Format(time.RFC3339),
+			"updatedAt": url.UpdatedAt.Format(time.RFC3339),
+		})
+
+	})
+
+	r.GET("/shorten/:shortCode", func(ctx *gin.Context) {
+		shortCode := ctx.Param("shortCode")
+		var url Shorten
+
+		if err := db.Where("short_code = ?", shortCode).First(&url).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				ctx.JSON(404, gin.H{"msg": "Short URL not found"})
+			} else {
+				ctx.JSON(500, gin.H{"msg": "Failed to retrieve URL", "error": err.Error()})
+			}
+			return
+		}
+
+		ctx.JSON(200, gin.H{
 			"id":        url.ID,
 			"url":       url.URL,
 			"shortCode": url.ShortCode,
