@@ -92,6 +92,12 @@ func setupRouter(db *gorm.DB) *gin.Engine {
 			return
 		}
 
+		// Update the access count for statistics
+		url.AccessCount += 1
+		if err := db.Save(&url).Error; err != nil {
+			ctx.JSON(500, gin.H{"msg": "Failed to update Access Count", "error": err.Error()})
+		}
+
 		ctx.JSON(200, gin.H{
 			"id":        url.ID,
 			"url":       url.URL,
