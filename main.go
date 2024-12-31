@@ -141,6 +141,27 @@ func setupRouter(db *gorm.DB) *gin.Engine {
 
 	})
 
+	r.DELETE("/shorten/:shortCode", func(ctx *gin.Context) {
+		shortCode := ctx.Param("shortCode")
+
+		var deletable Shorten
+		if err := db.Where("short_code = ?", shortCode).First(&deletable).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				ctx.JSON(http.StatusNotFound, gin.H{"error": "Error, not found"})
+			} else {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			}
+			return
+		}
+
+		if err := db.Delete(&deletable).Error; err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.Status(204)
+	})
+
 	return r
 }
 
