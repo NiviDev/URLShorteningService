@@ -162,6 +162,30 @@ func setupRouter(db *gorm.DB) *gin.Engine {
 		ctx.Status(204)
 	})
 
+	r.GET("/shorten/:shortCode/stats", func(ctx *gin.Context) {
+		shortCode := ctx.Param("shortCode")
+
+		var url Shorten
+
+		if err := db.Where("short_code = ?", shortCode).First(&url).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				ctx.JSON(http.StatusNotFound, gin.H{"error": "Error, not found"})
+			} else {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			}
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"id":         url.ID,
+			"url":        url.URL,
+			"shortCode":  url.ShortCode,
+			"createdAt":  url.CreatedAt.Format(time.RFC3339),
+			"updatedAt":  url.UpdatedAt.Format(time.RFC3339),
+			"accesCount": url.AccessCount,
+		})
+	})
+
 	return r
 }
 
