@@ -12,8 +12,6 @@ import (
 	"github.com/teris-io/shortid"
 )
 
-//var db = make(map[string]string)
-
 func setupRouter(db *gorm.DB) *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
@@ -21,11 +19,6 @@ func setupRouter(db *gorm.DB) *gin.Engine {
 
 	// Load HTML Templates
 	r.LoadHTMLGlob("templates/*")
-
-	// Ping test
-	r.GET("/ping", func(c *gin.Context) {
-		c.String(http.StatusOK, "pong")
-	})
 
 	// Load the Main Page
 	r.GET("/", func(ctx *gin.Context) {
